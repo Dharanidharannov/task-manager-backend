@@ -67,7 +67,7 @@ emprouter.post('/employees', uploadImage.single('image'), singleImagePath, async
 
 emprouter.get('/employees', async (req, res) => {
     try {
-        const employees = await Employee.find().populate('Department Role Reportingto');
+        const employees = await Employee.find().populate('Department Role Reportingto').sort({_id:-1});
         res.status(200).json(employees);
     } catch (error) {
         res.status(500).json({ error: 'Error fetching employees' });
@@ -103,12 +103,35 @@ emprouter.put('/employees/:id', uploadImage.single('image'), singleImagePath, as
 
 emprouter.delete('/employees/:id', async (req, res) => {
     try {
+        const employee = await Employee.findById(req.params.id);
+        
+        if (!employee) {
+            return res.status(404).json({ error: 'Employee not found' });
+        }
+
+        // Delete the employee from the database
         await Employee.findByIdAndDelete(req.params.id);
-        res.status(200).json({ message: 'Employee deleted successfully' });
+
+        // Email data
+        const emailData = {
+            email: employee.Email,
+            subject: 'Employment Termination Notice',
+            text: `Dear ${employee.Empname},\n\nWe regret to inform you that your employment with [Company Name] has been terminated, effective immediately.\n\nIf you have any questions, please reach out to HR.\n\nBest Regards,\n[Company Team]`,
+        };
+
+        // Send termination email
+        const isMailSent = await mailSender(emailData);
+        if (!isMailSent) {
+            console.error('Failed to send termination email');
+        }
+
+        res.status(200).json({ message: 'Employee terminated successfully' });
     } catch (error) {
+        console.error(error);
         res.status(500).json({ error: 'Error deleting employee' });
     }
 });
+
 
 emprouter.post('/signin', async (req, res) => {
     try {
@@ -198,7 +221,7 @@ emprouter.get('/employees/:id/projects', async (req, res) => {
         const employeeId = req.params.id;
 
         
-        const projects = await Project.find({ Assignedto: employeeId })
+        const projects = await Project.find({ Assignedto: employeeId }).sort({_id:-1})
             .populate('Assignedto', 'Empname Email')
             .populate('Assignedby', 'Empname Email');
 

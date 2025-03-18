@@ -1,20 +1,19 @@
 import express from "express";
 import mongoose from "mongoose";
-import { SubProject, Project } from "../Models/Empmodel.mjs"; // Ensure Project is imported
+import { SubProject, Project } from "../Models/Empmodel.mjs"; 
 
 const subprojectrouter = express.Router();
 
-// Create a new subproject
+
 subprojectrouter.post('/subprojects', async (req, res) => {
     try {
       const { TaskName, TaskDescription, Assignedby, Assignedto, DueDate, projectId } = req.body;
-      
-      // Check if projectId exists
+   
       if (!projectId) {
         return res.status(400).json({ error: "Project ID is required" });
       }
       
-      // Create a new subproject
+  
       const subproject = new SubProject({
         TaskName,
         TaskDescription,
@@ -32,9 +31,8 @@ subprojectrouter.post('/subprojects', async (req, res) => {
     }
   });
 
-// Get all subprojects
 subprojectrouter.get('/subprojects', async (req, res) => {
-    const { projectId } = req.query;  // Make sure to get the projectId from the query parameter
+    const { projectId } = req.query;
     if (!projectId) {
       return res.status(400).json({ error: "Project ID is required" });
     }
@@ -42,7 +40,7 @@ subprojectrouter.get('/subprojects', async (req, res) => {
     try {
       const subprojects = await SubProject.find({ projectId })
       .populate('Assignedby', 'Empname Email')
-      .populate('Assignedto', 'Empname Email');  // Assuming Subproject model
+      .populate('Assignedto', 'Empname Email').sort({_id:-1});  
       res.json(subprojects);
     } catch (err) {
       console.error(err);
@@ -50,12 +48,12 @@ subprojectrouter.get('/subprojects', async (req, res) => {
     }
   });
 
-// Get a single subproject by ID
+
 subprojectrouter.get('/subprojects/:id', async (req, res) => {
     try {
         const subproject = await SubProject.findById(req.params.id)
             .populate('Assignedby', 'Empname Email')
-            .populate('Assignedto', 'Empname Email');
+            .populate('Assignedto', 'Empname Email').sort({_id:-1});
 
         if (!subproject) {
             return res.status(404).json({ message: 'Subproject not found' });
@@ -68,17 +66,16 @@ subprojectrouter.get('/subprojects/:id', async (req, res) => {
     }
 });
 
-// Update a subproject by ID
+
 subprojectrouter.put('/subprojects/:id', async (req, res) => {
     try {
         const { TaskName, TaskDescription, Assignedby, Assignedto, DueDate, Status, review, ProjectId } = req.body;
 
-        // Validate `ProjectId` if provided
         if (ProjectId && !mongoose.Types.ObjectId.isValid(ProjectId)) {
             return res.status(400).json({ error: 'Invalid ProjectId' });
         }
 
-        // Validate `Assignedby` and `Assignedto` if provided
+      
         if (Assignedby && !mongoose.Types.ObjectId.isValid(Assignedby)) {
             return res.status(400).json({ error: 'Invalid Assignedby ID' });
         }

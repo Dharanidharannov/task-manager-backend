@@ -40,7 +40,7 @@ projectrouter.post('/projects', async (req, res) => {
 
 projectrouter.get('/projects', async (req, res) => {
     try {
-        const projects = await Project.find()
+        const projects = await Project.find().sort({ _id: -1})
             .populate('Assignedby', 'Empname Email')
             .populate('Assignedto', 'Empname Email');
 
@@ -68,22 +68,12 @@ projectrouter.get('/projects/:id', async (req, res) => {
     }
 });
 
-
 projectrouter.put('/projects/:id', async (req, res) => {
     try {
         const { ProjectName, ProjectDescription, Assignedby, Assignedto, DueDate, Status } = req.body;
 
-   
-        if (Assignedby && !mongoose.Types.ObjectId.isValid(Assignedby)) {
-            return res.status(400).json({ error: 'Invalid Assignedby ID' });
-        }
-        if (Assignedto) {
-            for (const assignee of Assignedto) {
-                if (!mongoose.Types.ObjectId.isValid(assignee)) {
-                    return res.status(400).json({ error: 'Invalid Assignedto ID' });
-                }
-            }
-        }
+        console.log("Updating Project ID:", req.params.id);
+        console.log("New Status:", Status);
 
         const updatedProject = await Project.findByIdAndUpdate(
             req.params.id,
@@ -102,12 +92,14 @@ projectrouter.put('/projects/:id', async (req, res) => {
             return res.status(404).json({ message: 'Project not found' });
         }
 
+        console.log("Updated Project:", updatedProject); // ✅ Check if Status updates in DB
         res.status(200).json({ message: 'Project updated successfully', project: updatedProject });
     } catch (error) {
         console.error("Error updating project:", error);
         res.status(500).json({ error: 'Error updating project' });
     }
 });
+
 
 projectrouter.delete('/projects/:id', async (req, res) => {
     try {

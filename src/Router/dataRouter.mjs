@@ -39,7 +39,7 @@ dataaddrouter.post('/datas', async (req, res) => {
 
 dataaddrouter.get('/datas', async (req, res) => {
     try {
-        const { EmpId } = req.query; 
+        const { EmpId ,CreatedDate } = req.query; 
 
         let filter = {}; 
         if (EmpId) {
@@ -49,7 +49,7 @@ dataaddrouter.get('/datas', async (req, res) => {
             filter = { EmpId: new mongoose.Types.ObjectId(EmpId) }; 
         }
 
-        const dataEntries = await Dataadd.find(filter).populate('EmpId');
+        const dataEntries = (await Dataadd.find(filter).populate('EmpId').sort({_id:-1}));
         res.status(200).json(dataEntries);
     } catch (error) {
         console.error(error);
@@ -74,7 +74,7 @@ dataaddrouter.get('/datas/:id',async (req, res) => {
                 req.params.id,
                 req.body,
                 { new: true } 
-            );
+            ).sort({_id:-1});
     
             if (!updatedData) {
                 return res.status(404).json({ message: 'Data entry not found' });
